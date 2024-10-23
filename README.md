@@ -1,2 +1,2 @@
 # mol_weld
-RDKit implementation to weld core with different R-groups
+Using RDKit to connect r-groups to core
