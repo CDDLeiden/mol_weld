@@ -4,21 +4,30 @@ from rdkit.Chem.MolStandardize import rdMolStandardize
 
 enumerator = rdMolStandardize.TautomerEnumerator()
 
+
 def get_product(reacts):
-    rxn1 = rdChemReactions.ReactionFromSmarts('[#6:1](=[O]).[#7X3H1:6]~[#6X3:7](~[#7:8])~[#7X3H2:9]>>[#6:1][#7:8][#6X3:7](=[#7X3H0:6])~[#7X3H2:9]')
+    # two step reaction, first nucleophilic addition by NCN to the aldehyde
+    rxn1 = rdChemReactions.ReactionFromSmarts(
+        '[#6:1](=[O]).[#7X3H1:6]~[#6X3:7](~[#7:8])~[#7X3H2:9]>>[#6:1][#7:8][#6X3:7](=[#7X3H0:6])~[#7X3H2:9]'
+    )
     products = rxn1.RunReactants(reacts[:2])
     product1 = Chem.Mol(products[0][0])
     final = None
+    # enumerate tautomers
     for taut in enumerator.Enumerate(product1):
-        rxn2 = rdChemReactions.ReactionFromSmarts('[#7X3H2:1][#6X3:6]~[#7H0:5][#6:2].[#6][#6](=[#8])[#6][#6:3](=[#8])[*:4]>>[#6:2]1[#6]([#6:3](=[#8])[*:4])=[#6]([#6])[#7:1][#6X3:6]~[#7X3:5]1')
-        products2 = rxn2.RunReactants((taut,reacts[2]))
+        # second reaction, closing of ring by nucleophilic attack by primary amine onto carbonyl group
+        rxn2 = rdChemReactions.ReactionFromSmarts(
+            '[#7X3H2:1][#6X3:6]~[#7H0:5][#6:2].[#6][#6](=[#8])[#6][#6:3](=[#8])[*:4]>>[#6:2]1[#6]([#6:3](=[#8])[*:4])=[#6]([#6])[#7:1][#6X3:6]~[#7X3:5]1'
+        )
+        products2 = rxn2.RunReactants((taut, reacts[2]))
+        # filter out reactions that do not yield a result or cannot be kekulized
         try:
             Chem.SanitizeMol(products2[0][0])
             print(products2[0][0])
             final = products2[0][0]
         except:
             pass
-       
+
     return final
 
 if __name__ == "__main__":
